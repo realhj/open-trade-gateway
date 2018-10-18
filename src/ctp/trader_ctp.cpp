@@ -89,17 +89,62 @@ void TraderCtp::OnInit()
     Log(LOG_INFO, NULL, "ctp Init, instance=%p, UserID=%s", this, m_user_id.c_str());
 }
 
+static std::string base64_decode(const std::string &in) {
+
+    std::string out;
+
+    std::vector<int> T(256,-1);
+    for (int i=0; i<64; i++) T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i; 
+
+    int val=0, valb=-8;
+    for (const char& c : in) {
+        if (T[c] == -1) break;
+        val = (val<<6) + T[c];
+        valb += 6;
+        if (valb>=0) {
+            out.push_back(char((val>>valb)&0xFF));
+            valb-=8;
+        }
+    }
+    return out;
+}
+
 void TraderCtp::SendLoginRequest()
 {
     long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     m_req_login_dt.store(now);
+    //提交终端信息
+    if (!m_req_login.client_system_info.empty()){
+        CThostFtdcUserSystemInfoField f;
+        memset(&f, 0, sizeof(f));
+        strcpy_x(f.BrokerID, m_req_login.broker.ctp_broker_id.c_str());
+        strcpy_x(f.UserID, m_req_login.user_name.c_str());
+        ///用户公网IP
+        strcpy_x(f.ClientPublicIP, m_req_login.client_ip.c_str());
+        ///终端IP端口
+        f.ClientIPPort = m_req_login.client_port;
+        ///登录成功时间
+        std::time_t t = now;
+        std::tm* tm = std::localtime(&t);
+        snprintf(f.ClientLoginTime, 9, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
+        std::string client_system_info = base64_decode(m_req_login.client_system_info);
+        ///用户端系统内部信息长度
+        f.ClientSystemInfoLen = client_system_info.size();
+        ///用户端系统内部信息
+        strcpy_x(f.ClientSystemInfo, client_system_info.c_str());
+        ///App代码
+        strcpy_x(f.ClientAppID, m_req_login.client_app_id.c_str());
+        int ret = m_api->RegisterUserSystemInfo(&f);
+        Log(LOG_INFO, NULL, "ctp RegisterUserSystemInfo, instance=%p, UserID=%s, ret=%d", this, f.UserID, ret);
+    }
+    //发起登录请求
     CThostFtdcReqUserLoginField field;
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_req_login.broker.ctp_broker_id.c_str());
     strcpy_x(field.UserID, m_req_login.user_name.c_str());
     strcpy_x(field.Password, m_req_login.password.c_str());
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
-    strcpy_x(field.LoginRemark, m_req_login.client_addr.c_str());
+    strcpy_x(field.LoginRemark, m_req_login.client_ip.c_str());
     int ret = m_api->ReqUserLogin(&field, 1);
     Log(LOG_INFO, NULL, "ctp ReqUserLogin, instance=%p, UserID=%s, LoginRemark=%s, ret=%d", this, field.UserID, field.LoginRemark, ret);
 }
@@ -117,7 +162,7 @@ void TraderCtp::ReqAuthenticate()
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
     strcpy_x(field.AuthCode, m_req_login.broker.auth_code.c_str());
     int r = m_api->ReqAuthenticate(&field, 0);
-    Log(LOG_INFO, NULL, "ctp ReqAuthenticate, instance=%p, ret=%d", this, r);
+    Log(LOG_INFO, NULL, "ctp ReqAuthenticate, instance=%p, UserProductInfo=%s, AuthCode=%s, ret=%d", this, m_req_login.broker.product_info.c_str(), m_req_login.broker.auth_code.c_str(), r);
 }
 
 void TraderCtp::OnClientReqInsertOrder(CtpActionInsertOrder d)

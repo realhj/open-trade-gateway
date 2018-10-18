@@ -146,9 +146,14 @@ void OnMessage(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
         }
         req.broker = broker->second;
         auto con = s->get_con_from_hdl(hdl);
-        req.client_addr = con->get_request_header("X-Real-IP");
-        if (req.client_addr.empty())
-            req.client_addr = con->get_remote_endpoint();
+        req.client_ip = con->get_request_header("X-Real-IP");
+        if (req.client_ip.empty())
+            req.client_ip = con->get_remote_endpoint();
+        auto client_port_str = con->get_request_header("X-Real-Port");
+        if (client_port_str.empty())
+            req.client_port = 32584;
+        else
+            req.client_port = std::stoi(client_port_str, nullptr, 10);
         if (broker->second.broker_type == "ctp") {
             trade_server_context.m_trader_map[hdl].m_trader_instance = new trader_dll::TraderCtp(std::bind(SendTextMsg, hdl, std::placeholders::_1));
             trade_server_context.m_trader_map[hdl].m_trader_instance->Start(req);
