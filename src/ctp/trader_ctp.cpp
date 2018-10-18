@@ -161,6 +161,7 @@ void TraderCtp::ReqAuthenticate()
     strcpy_x(field.UserID, m_user_id.c_str());
     strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
     strcpy_x(field.AuthCode, m_req_login.broker.auth_code.c_str());
+    strcpy_x(field.AppID, m_req_login.broker.product_info.c_str());
     int r = m_api->ReqAuthenticate(&field, 0);
     Log(LOG_INFO, NULL, "ctp ReqAuthenticate, instance=%p, UserProductInfo=%s, AuthCode=%s, ret=%d", this, m_req_login.broker.product_info.c_str(), m_req_login.broker.auth_code.c_str(), r);
 }
