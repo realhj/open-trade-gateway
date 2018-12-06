@@ -135,7 +135,7 @@ void TraderCtp::SendLoginRequest()
         ///App代码
         strcpy_x(f.ClientAppID, m_req_login.client_app_id.c_str());
         int ret = m_api->RegisterUserSystemInfo(&f);
-        Log(LOG_INFO, NULL, "ctp RegisterUserSystemInfo, instance=%p, UserID=%s, ClientSystemInfoLen=%d, base64=%s, ret=%d", this, f.UserID, client_system_info.size(), m_req_login.client_system_info, ret);
+	    Log(LOG_INFO, NULL, "ctp RegisterUserSystemInfo, instance=%p, UserID=%s, ClientSystemInfoLen=%d, base64=%s, ret=%d", this, f.UserID, client_system_info.size(), m_req_login.client_system_info.c_str(), ret);
     }
     //发起登录请求
     CThostFtdcReqUserLoginField field;

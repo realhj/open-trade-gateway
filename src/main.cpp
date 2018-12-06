@@ -11,6 +11,7 @@
 #include "trade_server.h"
 #include "md_service.h"
 #include "config.h"
+#include "ctp/ThostFtdcTraderApi.h"
 
 static int interrupted = 0;
 
@@ -21,9 +22,11 @@ void sigint_handler(int sig)
 	trade_server::Stop();
 }
 
+
 int main() {
     LogInit();
     Log(LOG_INFO, NULL, "server init");
+    Log(LOG_INFO, NULL, "ctp version:%s", CThostFtdcTraderApi::GetApiVersion());
     //加载配置文件
     if (!LoadConfig()) {
         return -1;
