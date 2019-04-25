@@ -111,7 +111,8 @@ static std::string base64_decode(const std::string &in) {
 
 void TraderCtp::SendLoginRequest()
 {
-    long long now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    long long now = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
     m_req_login_dt.store(now);
     //提交终端信息
     if (!m_req_login.client_system_info.empty()){
@@ -124,7 +125,10 @@ void TraderCtp::SendLoginRequest()
         ///终端IP端口
         f.ClientIPPort = m_req_login.client_port;
         ///登录成功时间
-        std::time_t t = now;
+        auto now2 = std::chrono::high_resolution_clock::now();
+        std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now2.time_since_epoch());
+        std::chrono::seconds s = std::chrono::duration_cast<std::chrono::seconds>(ns);
+        std::time_t t = s.count();        
         std::tm* tm = std::localtime(&t);
         snprintf(f.ClientLoginTime, 9, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
         std::string client_system_info = base64_decode(m_req_login.client_system_info);
@@ -135,7 +139,13 @@ void TraderCtp::SendLoginRequest()
         ///App代码
         strcpy_x(f.ClientAppID, m_req_login.client_app_id.c_str());
         int ret = m_api->RegisterUserSystemInfo(&f);
-	    Log(LOG_INFO, NULL, "ctp RegisterUserSystemInfo, instance=%p, UserID=%s, ClientSystemInfoLen=%d, base64=%s, ret=%d", this, f.UserID, client_system_info.size(), m_req_login.client_system_info.c_str(), ret);
+	    Log(LOG_INFO, NULL, "ctp RegisterUserSystemInfo, instance=%p, UserID=%s,ClientLoginTime=%s,ClientSystemInfoLen=%d, base64=%s, ret=%d"
+        , this
+        , f.UserID
+        ,f.ClientLoginTime
+        , client_system_info.size()
+        , m_req_login.client_system_info.c_str()
+        , ret);
     }
     //发起登录请求
     CThostFtdcReqUserLoginField field;
