@@ -159,7 +159,7 @@ void TraderCtp::ReqAuthenticate()
     memset(&field, 0, sizeof(field));
     strcpy_x(field.BrokerID, m_broker_id.c_str());
     strcpy_x(field.UserID, m_user_id.c_str());
-    strcpy_x(field.UserProductInfo, m_req_login.broker.product_info.c_str());
+    strcpy_x(field.UserProductInfo, "SHINNY_OTG");   
     strcpy_x(field.AuthCode, m_req_login.broker.auth_code.c_str());
     strcpy_x(field.AppID, m_req_login.broker.product_info.c_str());
     int r = m_api->ReqAuthenticate(&field, 0);
